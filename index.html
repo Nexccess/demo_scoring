@@ -499,6 +499,7 @@ input[type="file"]{padding:8px 12px;height:auto;cursor:pointer;font-size:13px}
 .gate-step-dot.done { background: #c0392b; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -1368,56 +1369,34 @@ function gateSubmitForm() {
   _gateSendMail(company, industry, email, _gatePass);
 }
 
-// ── Web3Forms でメール送信
+// ── EmailJS でメール送信
 function _gateSendMail(company, industry, email, pass) {
   document.getElementById('gateFormBtns').style.display = 'none';
   document.getElementById('gateSending').classList.add('show');
 
-  var msgBody = company + ' 様\n\n' +
-    'スコアリングシステムをご利用いただきありがとうございます。\n\n' +
-    '▼ 結果閲覧パスワード（6桁）\n\n' +
-    '　　' + pass + '\n\n' +
-    'このパスワードをサイトに入力すると審査スコアリング結果をご確認いただけます。\n\n' +
-    '※ 本メールは自動送信です。返信はできません。\n' +
-    '※ ご不明な点は info@nexccess.com までご連絡ください。\n\n' +
-    '─────────────────────\n' +
-    '合同会社Nexccess\n' +
-    'https://nexccess.com\n' +
-    '─────────────────────';
+  emailjs.init('s45-Ce7lRsbQtqlNt');
 
-  fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
-      access_key: '627bc7c7-f1c4-40c8-9d7d-acea3e7a4bd6',
-      to: email,
-      from_name: 'Nexccess スコアリングシステム',
-      subject: '【Nexccess】スコアリング結果 閲覧パスワード',
-      message: msgBody,
-      company_name: company,
-      industry: industry,
-      applicant_email: email,
-      _subject: '【Nexccess SCORING】新規申込：' + company + '（' + industry + '）'
-    })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    document.getElementById('gateSending').classList.remove('show');
-    document.getElementById('gateFormBtns').style.display = 'block';
-    if (data.success) {
+  var templateParams = {
+    to_email : email,
+    company  : company,
+    industry : industry,
+    pass     : pass
+  };
+
+  emailjs.send('service_xh3oajd', 'template_y7x76sf', templateParams)
+    .then(function() {
+      document.getElementById('gateSending').classList.remove('show');
+      document.getElementById('gateFormBtns').style.display = 'block';
       document.getElementById('gatePassMsg').innerHTML =
-        '<strong>' + document.getElementById('gf-email').value + '</strong> に<br>' +
-        'パスワードを送信しました。ご確認ください。';
+        '<strong>' + email + '</strong> に<br>パスワードを送信しました。ご確認ください。';
       _gateShowStep('C');
-    } else {
-      alert('送信に失敗しました。通信環境をご確認の上、再度お試しください。');
-    }
-  })
-  .catch(function() {
-    document.getElementById('gateSending').classList.remove('show');
-    document.getElementById('gateFormBtns').style.display = 'block';
-    alert('送信エラーが発生しました。時間をおいて再度お試しください。');
-  });
+    })
+    .catch(function(err) {
+      document.getElementById('gateSending').classList.remove('show');
+      document.getElementById('gateFormBtns').style.display = 'block';
+      console.error('EmailJS error:', err);
+      alert('送信エラーが発生しました。時間をおいて再度お試しください。');
+    });
 }
 
 
